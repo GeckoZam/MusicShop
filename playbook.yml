@@ -1,1 +1,90 @@
 
+---
+  - name: Instalar .NET Core 8 y configurar la aplicación de hotel
+    hosts: <ip_publica>
+    connection: local
+    become: yes
+    tasks:
+    - name: Actualizar el sistema
+      apt:
+        update_cache: yes
+        upgrade: dist
+    - name: Instalar dependencias necesarias
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+    - name: Descargar el paquete de repositorio de Microsoft para Ubuntu 24.04 LTS
+      command: wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+    - name: Instalar el paquete de repositorio de Microsoft
+      command: dpkg -i /tmp/packages-microsoft-prod.deb
+    - name: Actualizar el caché de apt después de agregar el repositorio
+      apt:
+        update_cache: yes
+    - name: Instalar .NET SDK
+      apt:
+        name: dotnet-sdk-8.0
+        state: present
+    - name: Crear archivo del proyecto
+      copy:
+        dest: /home/ubuntu/music_shop/music_shop_app.csproj
+        content: |
+          <Project Sdk="Microsoft.NET.Sdk.Web">
+                    <PropertyGroup>
+              <TargetFramework>net8.0</TargetFramework>
+          </PropertyGroup>
+          </Project>
+    - name: Crear archivo de código fuente
+      copy:
+        dest: /home/ubuntu/music_shop/Program.cs
+        content: |
+        using System;
+        public class Guitar
+        {
+            public void Play()
+            {
+                Console.WriteLine("Playing a guitar.");
+            }
+        }
+        
+        public class Piano
+        {
+            public void Play()
+            {
+                Console.WriteLine("Playing a piano.");
+            }
+        }
+        
+        public class MusicStore
+            public void PlayInstrument(string instrumentType)
+            {
+                if (instrumentType == "Guitar")
+                {
+                    var guitar = new Guitar();
+                    guitar.Play();
+                }
+                else if (instrumentType == "Piano")
+                {
+                    var piano = new Piano();
+                    piano.Play();
+                }
+                else
+                {
+                    Console.WriteLine("Instrument not available.");
+                }
+            }
+        }        
+    - name: Construir la aplicación de tienda de musica
+      command: dotnet build /home/ubuntu/music_shop/music_shop_app.csproj
+      args:
+        chdir: /home/ubuntu/music_shop
+     - name: Ejecutar la aplicación
+      command: dotnet run --urls "http://0.0.0.0:5000"
+      args:
+        chdir: /home/ubuntu/music_shop
+      async: 10  # Ejecutar el comando de forma asíncrona
+      poll: 0  # No esperar la finalización del comando
+        chdir: /home/ubuntu/cell/cellshopt: |
